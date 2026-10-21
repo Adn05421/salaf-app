@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>إدارة سلف الموظفين</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--hc:#fff;--bg:#F6F1E3;--card:#fff;--soft:#E3EFDC;--g:#1E5A39;--gl:#B9D4B0;--tx:#1d2a21;--mu:#66756b;--rd:#B3372E;--am:#B7791F;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--hc:#0f1a13;--bg:#141b16;--card:#1d2821;--soft:#25382b;--g:#5fbf86;--gl:#35513f;--tx:#eaf1ec;--mu:#9fb2a5;--rd:#ef7b72;--am:#e0b04f}}
+:root[data-theme=dark]{--hc:#0f1a13;--bg:#141b16;--card:#1d2821;--soft:#25382b;--g:#5fbf86;--gl:#35513f;--tx:#eaf1ec;--mu:#9fb2a5;--rd:#ef7b72;--am:#e0b04f}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font-family:Cairo,Tahoma,sans-serif;font-size:calc(15px*var(--fs,1));padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+header{background:var(--g);color:var(--hc);padding:14px 16px;font-weight:800;font-size:1.15em;position:sticky;top:0;z-index:5}
+main{padding:14px;max-width:760px;margin:auto}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--soft);border:1.5px solid var(--gl);border-radius:16px;padding:12px}
+.stat b{display:block;font-size:1.5em;font-weight:800;color:var(--g)}.stat span{color:var(--mu);font-size:.85em}
+.card{background:var(--card);border:1.5px solid var(--gl);border-radius:16px;padding:12px;margin:10px 0}
+.row{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.mu{color:var(--mu);font-size:.85em}.big{font-weight:800;font-size:1.1em}
+.bar{height:8px;background:var(--soft);border-radius:8px;margin:8px 0;overflow:hidden}.bar i{display:block;height:100%;background:var(--g)}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:10px 14px;min-height:44px;background:var(--g);color:var(--bg);font-weight:700}
+button.s{background:var(--soft);color:var(--g);border:1.5px solid var(--gl)}button.d{background:transparent;color:var(--rd);border:1.5px solid var(--rd)}
+.ic{min-width:44px;padding:8px;background:var(--soft);color:var(--g);border:1.5px solid var(--gl)}.ic.d{color:var(--rd);border-color:var(--rd);background:transparent}
+.tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.8em;font-weight:700;background:var(--soft);color:var(--g)}
+.tag.p{color:var(--am)}.tag.r,.tag.c{color:var(--rd)}
+input,select,textarea{font:inherit;width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--gl);background:var(--card);color:var(--tx);min-height:44px}
+label{display:block;margin:10px 0 4px;font-weight:600;font-size:.9em}
+nav{position:fixed;bottom:0;inset-inline:0;background:var(--card);border-top:1.5px solid var(--gl);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:6}
+nav button{flex:1;background:none;color:var(--mu);border-radius:0;display:flex;flex-direction:column;align-items:center;font-size:.8em;gap:2px}nav button.on{color:var(--g)}nav svg{width:24px;height:24px}
+.ov{position:fixed;inset:0;background:#0007;z-index:9;display:flex;align-items:flex-end;justify-content:center}
+.sh{background:var(--bg);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.toast{position:fixed;top:calc(60px + env(safe-area-inset-top,0px));inset-inline:16px;margin:auto;max-width:420px;padding:12px;border-radius:12px;background:var(--g);color:var(--bg);font-weight:700;text-align:center;z-index:20}.toast.e{background:var(--rd);color:#fff}
+.fab{position:fixed;inset-inline-start:16px;bottom:calc(88px + env(safe-area-inset-bottom,0px));z-index:7;border-radius:30px;padding:12px 18px;box-shadow:0 4px 14px #0004}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}.tabs button{white-space:nowrap;padding:6px 12px;min-height:36px}
+h3{margin:14px 0 4px}
+</style></head><body>
+<header id="hd">إدارة سلف الموظفين</header>
+<main id="app"></main>
+<nav id="nav"></nav>
+<script>
+const $=s=>document.querySelector(s);
+const ST={pending:'معلقة',approved:'معتمدة',repaying:'قيد السداد',paid:'مسددة بالكامل',rejected:'مرفوضة',cancelled:'ملغاة'};
+const METH={salary:'خصم من الراتب',cash:'نقدًا',transfer:'تحويل'};
+const IC={edit:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
+del:'<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6"/></svg>'};
+const NAVI={home:'<path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>',advs:'<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>',emps:'<circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M17 11a3 3 0 100-6M22 20c0-3-2-5-4-5.5"/>',more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'};
+let db={emps:[],advs:[],pays:[],logs:[],set:{devName:'عدنان صبياني',devPhone:'966542103430',cc:'966',theme:'auto',fs:1,cur:'ريال سعودي'}};
+try{const x=localStorage.getItem('salaf_db');if(x)db=Object.assign(db,JSON.parse(x))}catch(e){}
+const save=()=>{try{localStorage.setItem('salaf_db',JSON.stringify(db))}catch(e){}};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt=n=>(+n||0).toLocaleString('ar-SA',{maximumFractionDigits:2});
+const today=()=>new Date().toISOString().slice(0,10);
+const emp=id=>db.emps.find(e=>e.id==id)||{name:'—'};
+const paidOf=a=>db.pays.filter(p=>p.advId==a.id&&!p.void).reduce((s,p)=>s+p.amount,0);
+const remOf=a=>Math.max(0,a.amount-paidOf(a));
+function status(a){if(['pending','rejected','cancelled'].includes(a.status))return a.status;const p=paidOf(a);return p>=a.amount?'paid':p>0?'repaying':'approved'}
+function log(type,rec,before,after,reason){db.logs.unshift({id:uid(),t:new Date().toISOString(),type,rec,before:before?JSON.stringify(before):'',after:after?JSON.stringify(after):'',reason:reason||''});}
+function toast(m,e){const d=document.createElement('div');d.className='toast'+(e?' e':'');d.textContent=m;document.body.append(d);setTimeout(()=>d.remove(),2400)}
+let view='home',filt={emp:'',st:'',q:''},tab='';
+function setTheme(){const r=document.documentElement;if(db.set.theme=='auto')r.removeAttribute('data-theme');else r.dataset.theme=db.set.theme;r.style.setProperty('--fs',db.set.fs)}
+function sheet(html){closeSheet();const o=document.createElement('div');o.className='ov';o.id='ov';o.innerHTML='<div class="sh">'+html+'</div>';o.onclick=e=>{if(e.target==o)closeSheet()};document.body.append(o)}
+function closeSheet(){const o=$('#ov');if(o)o.remove()}
+function ask(msg,fn,needReason){sheet(`<div class="big">${msg}</div>${needReason?'<label>السبب (مطلوب)</label><input id="rs">':''}<div class="row" style="margin-top:14px"><button class="d" id="yes">تأكيد</button><button class="s" onclick="closeSheet()">تراجع</button></div>`);$('#yes').onclick=()=>{const r=needReason?$('#rs').value.trim():'';if(needReason&&!r)return toast('اكتب السبب أولًا',1);closeSheet();fn(r)}}
+function render(){
+ setTheme();const n=[['home','الرئيسية'],['advs','السلف'],['emps','الموظفون'],['more','المزيد']];
+ $('#nav').innerHTML=n.map(([k,l])=>`<button class="${view==k?'on':''}" onclick="view='${k}';render();scrollTo(0,0)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${NAVI[k]}</svg>${l}</button>`).join('');
+ $('#hd').textContent={home:'إدارة سلف الموظفين',advs:'السلف',emps:'الموظفون',more:'المزيد'}[view];
+ $('#app').innerHTML=({home:vHome,advs:vAdvs,emps:vEmps,more:vMore})[view]()
+}
+function vHome(){
+ const m=today().slice(0,7),paidM=db.pays.filter(p=>!p.void&&p.date.startsWith(m)).reduce((s,p)=>s+p.amount,0);
+ const c={};db.advs.forEach(a=>{const s=status(a);c[s]=(c[s]||0)+1});
+ const pend=db.advs.filter(a=>a.status=='pending').reduce((s,a)=>s+a.amount,0);
+ const outs=db.advs.filter(a=>['approved','repaying'].includes(status(a))).reduce((s,a)=>s+remOf(a),0);
+ const S=(v,l)=>`<div class="stat"><b>${v}</b><span>${l}</span></div>`;
+ let h=`<div class="grid">${S(fmt(paidM),'المسدد هذا الشهر')}${S(fmt(pend),'إجمالي السلف المعلقة')}${S(fmt(outs),'الرصيد المتبقي على الموظفين')}${S(db.emps.filter(e=>e.active!==false).length,'عدد الموظفين')}${S(c.pending||0,'سلف معلقة')}${S(c.approved||0,'سلف معتمدة')}${S(c.repaying||0,'بدأ سدادها')}${S(c.paid||0,'مسددة بالكامل')}</div>`;
+ if(!db.emps.length)h+=`<div class="card">ابدأ بإضافة أول موظف، ثم سجّل له السلفة.<br><br><button onclick="empForm()">إضافة موظف</button></div>`;
+ else if(!db.advs.length)h+=`<div class="card">لا توجد سلف بعد.<br><br><button onclick="advForm()">إضافة سلفة</button></div>`;
+ const late=db.advs.filter(a=>['approved','repaying'].includes(status(a))&&a.start&&a.start<today()&&remOf(a)>0);
+ if(late.length)h+=`<h3>أقساط تجاوزت تاريخ البدء</h3>`+late.map(advCard).join('');
+ return h
+}
+function advCard(a){const s=status(a),p=paidOf(a),pc=Math.min(100,p/a.amount*100),locked=db.pays.some(x=>x.advId==a.id);
+ return `<div class="card"><div class="row"><div><div class="big">${esc(emp(a.empId).name)}</div><div class="mu">${a.ref} • ${a.date}</div></div><span class="tag ${s[0]=='p'&&s!='paid'?'p':s=='rejected'||s=='cancelled'?'r':''}">${ST[s]}</span></div>
+ <div class="row" style="margin-top:6px"><span>المبلغ <b>${fmt(a.amount)}</b></span><span>المسدد <b>${fmt(p)}</b></span><span>المتبقي <b>${fmt(remOf(a))}</b></span></div><div class="bar"><i style="width:${pc}%"></i></div>
+ <div class="row"><button class="s" onclick="advDetail('${a.id}')">التفاصيل</button><span style="display:flex;gap:6px"><button class="ic" title="تعديل" aria-label="تعديل" onclick="advForm('${a.id}')">${IC.edit}</button><button class="ic d" title="${locked||['approved'].includes(a.status)?'إلغاء موثّق':'حذف'}" aria-label="حذف" onclick="advDel('${a.id}')">${IC.del}</button></span></div></div>`}
+function vAdvs(){
+ let l=db.advs.filter(a=>(!filt.emp||a.empId==filt.emp)&&(!filt.st||status(a)==filt.st)&&(!filt.q||(emp(a.empId).name+a.ref).includes(filt.q)));
+ return `<div class="card"><input placeholder="بحث بالاسم أو الرقم المرجعي" value="${esc(filt.q)}" onchange="filt.q=this.value;render()"><div class="grid"><select onchange="filt.emp=this.value;render()"><option value="">كل الموظفين</option>${db.emps.map(e=>`<option value="${e.id}" ${filt.emp==e.id?'selected':''}>${esc(e.name)}</option>`).join('')}</select><select onchange="filt.st=this.value;render()"><option value="">كل الحالات</option>${Object.entries(ST).map(([k,v])=>`<option value="${k}" ${filt.st==k?'selected':''}>${v}</option>`).join('')}</select></div></div>`+(l.map(advCard).join('')||'<div class="card mu">لا توجد سلف مطابقة.</div>')+`<button class="fab" onclick="advForm()">+ سلفة جديدة</button>`
+}
+function vEmps(){
+ const q=filt.eq||'';
+ let l=db.emps.filter(e=>!q||[e.name,e.no,e.phone,e.wa].join(' ').includes(q));
+ return `<input placeholder="بحث بالاسم أو الرقم أو الجوال" value="${esc(q)}" onchange="filt.eq=this.value;render()">`+(l.map(e=>{const A=db.advs.filter(a=>a.empId==e.id&&!['rejected','cancelled','pending'].includes(a.status)),tot=A.reduce((s,a)=>s+a.amount,0),pd=A.reduce((s,a)=>s+paidOf(a),0);
+ return `<div class="card"><div class="row"><div><div class="big">${esc(e.name)} ${e.active===false?'<span class="tag r">مؤرشف</span>':''}</div><div class="mu">${esc(e.title||'')} ${e.no?'• رقم '+esc(e.no):''}</div></div><span style="display:flex;gap:6px"><button class="ic" title="تعديل" aria-label="تعديل" onclick="empForm('${e.id}')">${IC.edit}</button><button class="ic d" title="حذف أو أرشفة" aria-label="حذف" onclick="empDel('${e.id}')">${IC.del}</button></span></div>
+ <div class="mu">جوال: ${esc(e.phone||'—')} • واتساب: ${esc(e.wa||'—')}</div><div class="row" style="margin-top:6px"><span>الراتب <b>${fmt(e.salary)}</b></span><span>السلف <b>${fmt(tot)}</b></span><span>المسدد <b>${fmt(pd)}</b></span><span>المتبقي <b>${fmt(tot-pd)}</b></span></div></div>`}).join('')||'<div class="card mu">لا يوجد موظفون.</div>')+`<button class="fab" onclick="empForm()">+ موظف جديد</button>`
+}
+function fld(id,l,v,t,ex){return `<label>${l}</label><input id="${id}" type="${t||'text'}" value="${esc(v==null?'':v)}" ${ex||''}>`}
+function empForm(id){const e=db.emps.find(x=>x.id==id)||{cc:db.set.cc};
+ sheet(`<div class="big">${id?'تعديل موظف':'إضافة موظف'}</div>${fld('n','الاسم الكامل *',e.name)}${fld('ne','الاسم بالإنجليزية',e.nameEn)}${fld('no','رقم الموظف',e.no)}${fld('ph','رقم الجوال',e.phone,'tel')}<div class="grid"><div>${fld('cc','مفتاح الدولة',e.cc||db.set.cc)}</div><div>${fld('wa','رقم الواتساب',e.wa,'tel')}</div></div>${fld('sal','الراتب الشهري *',e.salary,'number','min=0 step=any')}${fld('ti','المسمى الوظيفي',e.title)}${fld('hr','تاريخ التوظيف',e.hire,'date')}<label>ملاحظات</label><textarea id="nt">${esc(e.notes)}</textarea><div class="row" style="margin-top:14px"><button onclick="empSave('${id||''}')">حفظ</button><button class="s" onclick="closeSheet()">إلغاء</button></div>`)}
+const digits=s=>String(s||'').replace(/[^\d]/g,'');
+function waNum(e){let d=digits(e.wa);if(!d)return '';const cc=digits(e.cc||db.set.cc);d=d.replace(/^00/,'');if(d.startsWith(cc)&&d.length>=cc.length+8)return d;return cc+d.replace(/^0+/,'')}
+function empSave(id){const v=i=>$('#'+i).value.trim();if(!v('n'))return toast('الاسم مطلوب',1);const sal=+v('sal');if(!(sal>0))return toast('الراتب غير صالح',1);
+ const wa=digits(v('wa'));if(wa&&(wa.length<8||wa.length>13))return toast('رقم الواتساب غير صالح',1);
+ const o={name:v('n'),nameEn:v('ne'),no:v('no'),phone:v('ph'),cc:v('cc')||'966',wa:v('wa'),salary:sal,title:v('ti'),hire:v('hr'),notes:v('nt')};
+ if(id){const e=db.emps.find(x=>x.id==id);log('تعديل موظف',e.name,{...e},{...e,...o});Object.assign(e,o)}else{o.id=uid();o.active=true;db.emps.push(o);log('إضافة موظف',o.name,null,o)}
+ save();closeSheet();toast('تم الحفظ');render()}
+function empDel(id){const e=emp(id),has=db.advs.some(a=>a.empId==id);
+ if(has)ask(`«${esc(e.name)}» لديه سلف مسجلة، لذلك لا يُحذف. هل تريد ${e.active===false?'إعادة تفعيله':'أرشفته'}؟`,()=>{const b={...e};e.active=e.active===false;log(e.active?'تفعيل موظف':'أرشفة موظف',e.name,b,{...e});save();toast('تم');render()});
+ else ask(`حذف الموظف «${esc(e.name)}» نهائيًا؟`,()=>{db.emps=db.emps.filter(x=>x.id!=id);log('حذف موظف',e.name,e);save();toast('تم الحذف');render()})}
+function advForm(id){const a=db.advs.find(x=>x.id==id)||{date:today(),n:1,method:'salary',status:'pending',start:today()};
+ if(!db.emps.filter(e=>e.active!==false).length)return toast('أضف موظفًا أولًا',1);
+ if(id&&db.pays.some(p=>p.advId==id&&!p.void))return sheet(`<div class="big">لا يمكن تعديل مبلغ سلفة بدأ سدادها</div><p class="mu">لحماية الحسابات، عدّل الدفعات من تفاصيل السلفة أو ألغِ السلفة بإجراء موثّق.</p><button class="s" onclick="closeSheet()">حسنًا</button>`);
+ sheet(`<div class="big">${id?'تعديل سلفة':'إضافة سلفة'}</div><label>الموظف *</label><select id="e">${db.emps.filter(e=>e.active!==false).map(e=>`<option value="${e.id}" ${a.empId==e.id?'selected':''}>${esc(e.name)}</option>`).join('')}</select>${fld('am','مبلغ السلفة *',a.amount,'number','min=1 step=any oninput="calc()"')}${fld('dt','تاريخ الطلب',a.date,'date')}${fld('rs','السبب',a.reason)}<label>طريقة السداد</label><select id="me">${Object.entries(METH).map(([k,v])=>`<option value="${k}" ${a.method==k?'selected':''}>${v}</option>`).join('')}</select><div class="grid"><div>${fld('n','عدد الأقساط',a.n,'number','min=1 oninput="calc()"')}</div><div>${fld('in','قيمة القسط',a.inst,'number','min=0 step=any')}</div></div>${fld('st','تاريخ بدء الخصم',a.start,'date')}<label>الحالة</label><select id="sx">${['pending','approved','rejected'].map(k=>`<option value="${k}" ${a.status==k?'selected':''}>${ST[k]}</option>`).join('')}</select><label>ملاحظات</label><textarea id="nt">${esc(a.notes)}</textarea><div class="row" style="margin-top:14px"><button onclick="advSave('${id||''}')">حفظ</button><button class="s" onclick="closeSheet()">إلغاء</button></div>`);calc()}
+function calc(){const am=+$('#am').value,n=+$('#n').value||1;if(am>0&&n>0&&!$('#in').dataset.m)$('#in').value=Math.round(am/n*100)/100;$('#in').oninput=function(){this.dataset.m=1}}
+function advSave(id){const v=i=>$('#'+i).value.trim();const am=+v('am'),n=Math.floor(+v('n'));
+ if(!(am>0))return toast('مبلغ السلفة غير صالح',1);if(!(n>=1))return toast('عدد الأقساط غير صالح',1);
+ const o={empId:v('e'),amount:am,date:v('dt')||today(),reason:v('rs'),method:v('me'),n,inst:+v('in')||Math.round(am/n*100)/100,start:v('st'),status:v('sx'),notes:v('nt')};
+ const go=()=>{let a;if(id){a=db.advs.find(x=>x.id==id);log('تعديل سلفة',a.ref,{...a},{...a,...o});Object.assign(a,o)}else{a={id:uid(),ref:'SLF-'+String(db.advs.length+1).padStart(4,'0'),wa:'لم تُرسل',...o};db.advs.push(a);log('إضافة سلفة',a.ref,null,a)}
+  save();closeSheet();toast('تم حفظ السلفة');render();if(!id)setTimeout(()=>waSheet(a.id),300)};
+ if(am>=5000)ask(`تأكيد تسجيل سلفة بمبلغ ${fmt(am)}؟`,go);else go()}
+function advDel(id){const a=db.advs.find(x=>x.id==id),has=db.pays.some(p=>p.advId==id&&!p.void);
+ if(has||status(a)!='pending'&&a.status!='rejected'){ if(a.status=='cancelled')return toast('السلفة ملغاة مسبقًا',1);
+  ask(`السلفة معتمدة أو لها دفعات، لذلك تُلغى بإجراء موثّق ولا تُحذف. إلغاء ${a.ref}؟`,r=>{const b={...a};a.status='cancelled';log('إلغاء سلفة',a.ref,b,{...a},r);save();toast('تم الإلغاء');render()},1)}
+ else ask(`حذف السلفة ${a.ref}؟`,()=>{db.advs=db.advs.filter(x=>x.id!=id);log('حذف سلفة',a.ref,a);save();toast('تم الحذف');render()})}
+function advDetail(id){const a=db.advs.find(x=>x.id==id),s=status(a),ps=db.pays.filter(p=>p.advId==id);
+ const canPay=['approved','repaying'].includes(s)||a.status=='approved';
+ sheet(`<div class="row"><div class="big">${esc(emp(a.empId).name)}</div><span class="tag">${ST[s]}</span></div><div class="mu">${a.ref} • ${a.date} • ${METH[a.method]}</div>
+ <div class="card"><div class="row"><span>المبلغ <b>${fmt(a.amount)}</b></span><span>الأقساط <b>${a.n} × ${fmt(a.inst)}</b></span></div><div class="row"><span>المسدد <b>${fmt(paidOf(a))}</b></span><span>المتبقي <b>${fmt(remOf(a))}</b></span></div><div class="mu">بدء الخصم: ${a.start||'—'}${a.reason?' • السبب: '+esc(a.reason):''}</div><div class="mu">واتساب: ${a.wa||'لم تُرسل'}${a.waAt?' ('+new Date(a.waAt).toLocaleString('ar-SA')+')':''}</div></div>
+ <div class="row">${a.status=='pending'?`<button onclick="setSt('${id}','approved')">اعتماد</button><button class="d" onclick="setSt('${id}','rejected')">رفض</button>`:''}${canPay?`<button onclick="payForm('${id}')">تسجيل دفعة</button>`:''}<button class="s" onclick="waSheet('${id}')">إرسال عبر واتساب</button><button class="s" onclick="window.print()">طباعة</button></div>
+ <h3>الدفعات</h3>${ps.map(p=>`<div class="card ${p.void?'mu':''}"><div class="row"><span>${p.void?'<s>':''}${fmt(p.amount)} • ${p.date}${p.void?'</s> (ملغاة)':''}<br><span class="mu">${esc(p.note||'')}</span></span>${p.void?'':`<span style="display:flex;gap:6px"><button class="ic" title="تعديل" aria-label="تعديل" onclick="payForm('${id}','${p.id}')">${IC.edit}</button><button class="ic d" title="إلغاء الدفعة" aria-label="حذف" onclick="payDel('${p.id}','${id}')">${IC.del}</button></span>`}</div></div>`).join('')||'<div class="mu">لا توجد دفعات.</div>'}
+ <button class="s" style="margin-top:12px" onclick="closeSheet()">إغلاق</button>`)}
+function setSt(id,s){const a=db.advs.find(x=>x.id==id),b={...a};a.status=s;log(s=='approved'?'اعتماد سلفة':'رفض سلفة',a.ref,b,{...a});save();toast('تم');render();advDetail(id);if(s=='approved')waSheet(id)}
+function payForm(id,pid){const a=db.advs.find(x=>x.id==id),p=db.pays.find(x=>x.id==pid)||{amount:Math.min(a.inst,remOf(a)),date:today()};
+ sheet(`<div class="big">${pid?'تعديل دفعة':'تسجيل دفعة'}</div><div class="mu">المتبقي الآن: ${fmt(remOf(a)+(pid?p.amount:0))}</div>${fld('pa','المبلغ *',p.amount,'number','min=0.01 step=any')}${fld('pd','التاريخ',p.date,'date')}${fld('pn','ملاحظة',p.note)}<div class="row" style="margin-top:14px"><button onclick="paySave('${id}','${pid||''}')">حفظ</button><button class="s" onclick="advDetail('${id}')">رجوع</button></div>`)}
+function paySave(id,pid){const a=db.advs.find(x=>x.id==id),am=+$('#pa').value,old=pid?db.pays.find(x=>x.id==pid):null;
+ const room=remOf(a)+(old?old.amount:0);if(!(am>0))return toast('المبلغ غير صالح',1);if(am>room+1e-9)return toast('المبلغ أكبر من المتبقي ('+fmt(room)+')',1);
+ const o={amount:am,date:$('#pd').value||today(),note:$('#pn').value.trim()};
+ if(old){log('تعديل دفعة',a.ref,{...old},{...old,...o});Object.assign(old,o)}else{const p={id:uid(),advId:id,...o};db.pays.push(p);log('تسجيل دفعة',a.ref,null,p)}
+ if(a.status=='pending')a.status='approved';save();toast('تم الحفظ');render();advDetail(id);if(!old&&remOf(a)==0)toast('اكتمل سداد السلفة')}
+function payDel(pid,id){ask('إلغاء هذه الدفعة؟ تبقى محفوظة في السجل.',r=>{const p=db.pays.find(x=>x.id==pid),b={...p};p.void=true;log('إلغاء دفعة',db.advs.find(x=>x.id==id).ref,b,{...p},r);save();toast('تم الإلغاء');render();advDetail(id)},1)}
+function waMsg(a){const e=emp(a.empId);return `السلام عليكم ورحمة الله وبركاته،\n\nالأستاذ/ ${e.name}،\n\nنفيدكم بأنه تم تسجيل سلفة بالبيانات التالية:\n\n- اسم الموظف: ${e.name}\n- رقم السلفة: ${a.ref}\n- مبلغ السلفة: ${fmt(a.amount)} ريال سعودي\n- تاريخ السلفة: ${a.date}\n- طريقة السداد: ${METH[a.method]}\n- عدد الأقساط: ${a.n}\n- قيمة القسط: ${fmt(a.inst)} ريال سعودي\n- المسدد: ${fmt(paidOf(a))} ريال سعودي\n- الرصيد المتبقي: ${fmt(remOf(a))} ريال سعودي\n- حالة السلفة: ${ST[status(a)]}\n\nيرجى مراجعة البيانات أعلاه والتواصل مع الإدارة عند وجود أي استفسار.\n\nمع التحية،\nإدارة شؤون الموظفين.`}
+function waSheet(id){const a=db.advs.find(x=>x.id==id),e=emp(a.empId),num=waNum(e);
+ sheet(`<div class="big">إرسال تفاصيل السلفة عبر واتساب</div>${num?`<div class="mu">إلى: ${esc(e.name)} (+${num})</div>`:`<div class="card" style="border-color:var(--rd)">لا يوجد رقم واتساب لهذا الموظف.${e.id?`<br><button class="s" onclick="empForm('${e.id}')">إضافة الرقم</button>`:''}</div>`}<label>نص الرسالة (قابل للتعديل)</label><textarea id="wm" rows="12">${esc(waMsg(a))}</textarea><div class="row" style="margin-top:12px"><button ${num?'':'disabled'} onclick="waOpen('${id}','${num}')">فتح واتساب</button><button class="s" onclick="navigator.clipboard&&navigator.clipboard.writeText($('#wm').value).then(()=>toast('تم النسخ'),()=>toast('تعذّر النسخ',1))">نسخ</button><button class="s" onclick="waDone('${id}')">أكدتُ الإرسال يدويًا</button></div><p class="mu">فتح واتساب لا يعني أن الرسالة أُرسلت؛ اضغط إرسال داخل واتساب ثم أكّد هنا.</p>`)}
+function waOpen(id,num){const a=db.advs.find(x=>x.id==id);window.open('https://wa.me/'+num+'?text='+encodeURIComponent($('#wm').value),'_blank');if(a.wa!='أكد المستخدم الإرسال'){a.wa='تم فتح واتساب';a.waAt=new Date().toISOString();log('فتح واتساب',a.ref);save()}}
+function waDone(id){const a=db.advs.find(x=>x.id==id);a.wa='أكد المستخدم الإرسال';a.waAt=new Date().toISOString();log('تأكيد إرسال واتساب',a.ref);save();toast('تم تسجيل الإرسال');closeSheet();render()}
+function vMore(){const s=db.set;
+ return `<div class="card"><div class="big">عن التطبيق</div><div>إدارة سلف الموظفين • الإصدار 1.0</div><div>المطور: ${esc(s.devName)}</div><div dir="ltr" style="text-align:right">+${esc(s.devPhone)}</div><div class="row" style="margin-top:10px"><a href="tel:+${digits(s.devPhone)}"><button>اتصال بالمطور</button></a><a href="https://wa.me/${digits(s.devPhone)}" target="_blank"><button class="s">واتساب المطور</button></a></div></div>
+ <div class="card"><div class="big">الإعدادات</div><label>المظهر</label><select onchange="db.set.theme=this.value;save();render()">${[['auto','تلقائي'],['light','فاتح'],['dark','داكن']].map(([k,v])=>`<option value="${k}" ${s.theme==k?'selected':''}>${v}</option>`).join('')}</select><label>حجم الخط</label><select onchange="db.set.fs=+this.value;save();render()">${[[.9,'صغير'],[1,'عادي'],[1.15,'كبير'],[1.3,'كبير جدًا']].map(([k,v])=>`<option value="${k}" ${s.fs==k?'selected':''}>${v}</option>`).join('')}</select>${fld('dn','اسم المطور',s.devName,'text','onchange="db.set.devName=this.value;save();render()"')}${fld('dp','رقم المطور (بصيغة دولية)',s.devPhone,'tel','onchange="db.set.devPhone=digits(this.value);save();render()"')}${fld('dc','مفتاح الدولة الافتراضي للموظفين',s.cc,'text','onchange="db.set.cc=digits(this.value)||\'966\';save()"')}</div>
+ <div class="card"><div class="big">النسخ الاحتياطي</div><div class="mu">البيانات محفوظة على هذا الجهاز فقط. صدّر نسخة بانتظام.</div><div class="row" style="margin-top:8px"><button onclick="bak()">تصدير نسخة</button><button class="s" onclick="$('#fi').click()">استعادة</button><button class="s" onclick="csv()">تصدير Excel (CSV)</button></div><input id="fi" type="file" accept=".json" hidden onchange="rest(this.files[0])"></div>
+ <div class="card"><div class="big">سجل العمليات (${db.logs.length})</div>${db.logs.slice(0,40).map(l=>`<div class="row" style="border-top:1px solid var(--gl);padding:6px 0"><span>${l.type} • ${esc(l.rec)}${l.reason?'<br><span class="mu">السبب: '+esc(l.reason)+'</span>':''}</span><span class="mu">${new Date(l.t).toLocaleString('ar-SA')}</span></div>`).join('')||'<span class="mu">لا توجد عمليات.</span>'}<p class="mu">السجل للقراءة فقط ولا يمكن حذفه من التطبيق.</p></div>`}
+function dl(name,txt,type){const b=new Blob([txt],{type}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+function bak(){dl('salaf-backup-'+today()+'.json',JSON.stringify(db),'application/json')}
+function csv(){const r=[['الرقم','الموظف','المبلغ','التاريخ','الحالة','المسدد','المتبقي']].concat(db.advs.map(a=>[a.ref,emp(a.empId).name,a.amount,a.date,ST[status(a)],paidOf(a),remOf(a)]));dl('salaf-report-'+today()+'.csv','\ufeff'+r.map(x=>x.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'),'text/csv')}
+function rest(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.emps||!d.advs)throw 0;ask('استبدال كل البيانات الحالية بالنسخة المختارة؟',()=>{db=Object.assign(db,d);save();toast('تمت الاستعادة');render()})}catch(e){toast('ملف غير صالح',1)}};r.readAsText(f)}
+render();
+</script></body></html>
